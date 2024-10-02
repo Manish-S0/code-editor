@@ -1,0 +1,95 @@
+.app {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 15%;
+  background-color: #282c34;
+  color: white;
+  padding: 20px;
+}
+
+.sidebar h3 {
+  margin-top: 0;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.user-avatar {
+  background-color: #3b82f6;
+  border-radius: 50%;
+  padding: 10px;
+  margin-right: 10px;
+  color: white;
+}
+
+.run-button, .copy-room-button, .leave-button {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #4caf50;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.editor-container {
+  width: 65%;
+  padding: 20px;
+  background-color: #1e1e1e;
+  color: white;
+}
+
+.input-output-tabs {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.input-output-tabs button {
+  margin-right: 10px;
+  padding: 5px 10px;
+  background-color: #61dafb;
+  border: none;
+  cursor: pointer;
+}
+
+.input-output-tabs textarea {
+  width: 100%;
+  height: 80px;
+  margin-top: 10px;
+}
+
+.output-area {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #333;
+  color: white;
+}
+
+.chat-container {
+  width: 20%;
+  padding: 20px;
+  background-color: #333;
+  color: white;
+}
+
+.chat input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.chat button {
+  width: 100%;
+  padding: 10px;
+  background-color: #61dafb;
+  border: none;
+  cursor: pointer;
+}
