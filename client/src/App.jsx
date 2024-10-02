@@ -74,7 +74,7 @@ const App = () => {
 
         console.log("Sending message:", inputMessage); 
         socket.emit('send_message', { room: 'default', username, message: inputMessage });
-        setMessages((prevMessages) => [...prevMessages, { username, message: inputMessage }]);
+        // setMessages((prevMessages) => [...prevMessages, { username, message: inputMessage }]);
         setInputMessage('');
     };
 
