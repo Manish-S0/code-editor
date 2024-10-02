@@ -36,11 +36,19 @@ io.on('connection', (socket) => {
 
     socket.on('run_code', ({ room, language, code }) => {
         // Create a temporary file
-        const filePath = path.join(__dirname, 'temp.js');
+        let filePath, command;
 
+        // Check the selected language and assign appropriate file extension and command
+        if (language === 'javascript') {
+            filePath = path.join(__dirname, 'temp.js');
+            command = `node ${filePath}`;
+        } else if (language === 'python') {
+            filePath = path.join(__dirname, 'temp.py');
+            command = `python ${filePath}`;  // Use python command to execute Python script
+        }
         // Write the code to the temporary file
         fs.writeFile(filePath, code, (err) => {
-          console.log('Code written to temp.js:', code);
+          
 
             if (err) {
                 console.error('Error writing file:', err);
@@ -48,7 +56,7 @@ io.on('connection', (socket) => {
             }
 
             // Execute the temporary file
-            exec(`node ${filePath}`, (error, stdout, stderr) => {
+            exec(command, (error, stdout, stderr) => {
                 // Delete the temporary file after execution
                 fs.unlink(filePath, (unlinkErr) => {
                     if (unlinkErr) {

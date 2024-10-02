@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import MonacoEditor from '@monaco-editor/react';
+import CopyButton from './CopyButton';
 
 const socket = io('http://localhost:5000');
 
@@ -99,7 +100,11 @@ const App = () => {
 
                 <button
                     onClick={handleRunCode}
-                    className="mt-4 w-full py-2 px-4 bg-blue-600 rounded">Run Code</button>
+                    className="mt-4 w-full py-2 px-4 bg-blue-600 rounded">Run Code
+                </button>
+
+                <CopyButton/>
+                
             </div>
 
             <div className="w-3/4 p-4 bg-gray-800 text-white border-4 border-gray-900">
@@ -110,9 +115,9 @@ const App = () => {
                     onChange={handleCodeChange}
                     theme="vs-dark"
                 />
-                <div className="mt-2 h-full">
+                <div className="mt-2">
                     <h3 className="text-lg font-bold">Output</h3>
-                    <div className="bg-gray-900 h-[24vh] text-white p-4 rounded mt-2">
+                    <div className="bg-gray-900 h-[24vh] text-white p-4 rounded mt-2 overflow-y-auto">
                         {output ? (
                             <pre>{output}</pre>  // Use <pre> to display code/output more neatly
                         ) : (
