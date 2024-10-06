@@ -63,6 +63,7 @@ io.on('connection', (socket) => {
     if (!userExists) {
       // Add the user to the room only if they don't already exist
       rooms[roomid].users.push({ id: socket.id, username });
+      
     }
     socket.join(roomid);
 
@@ -73,7 +74,61 @@ io.on('connection', (socket) => {
 
     io.to(socket.id).emit('room_joined', roomid);
     io.to(roomid).emit('connected_users', rooms[roomid].users);
+    // Send the current code to the newly joined user
+    io.to(socket.id).emit('code_update', rooms[roomid].code);
     console.log(`${username} joined room ${roomid}`);
+  });
+
+  // Handle code changes
+  socket.on('code_change', ({ roomid, code }) => {
+    if (rooms[roomid]) {
+        // Update the room's code
+        rooms[roomid].code = code;
+        console.log(`Code updated in room ${roomid}`);
+        
+        // Emit the updated code to other users in the room
+        socket.to(roomid).emit('code_update', code);
+    }
+  });
+
+  // Run code
+  socket.on('run_code', ({ roomid, language, code }) => {
+    const fileExtension = language === 'javascript' ? 'js' : language === 'python' ? 'py' : 'txt';
+    const tempFilePath = `./temp.${fileExtension}`;
+
+    // Write code to temp file
+    fs.writeFile(tempFilePath, code, (err) => {
+      if (err) {
+        console.error(err);
+        io.to(roomid).emit('code_output', 'Error writing the code to file');
+        return;
+      }
+
+      let command = '';
+      if (language === 'javascript') {
+        command = `node ${tempFilePath}`;
+      } else if (language === 'python') {
+        command = `python ${tempFilePath}`;
+      }
+
+      if (command) {
+        // Execute the code
+        exec(command, (err, stdout, stderr) => {
+          if (err) {
+            io.to(roomid).emit('code_output', stderr || 'Error executing the code');
+          } else {
+            io.to(roomid).emit('code_output', stdout || stderr);
+          }
+
+          // Clean up temp file
+          fs.unlink(tempFilePath, (err) => {
+            if (err) console.error('Error deleting temp file:', err);
+          });
+        });
+      } else {
+        io.to(roomid).emit('code_output', 'Unsupported language');
+      }
+    });
   });
 
 

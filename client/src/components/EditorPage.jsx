@@ -10,6 +10,8 @@ const EditorPage = () => {
     const { roomid, username } = useParams();
     
     const [language, setLanguage] = useState('javascript');
+    const [code, setCode] = useState('// Write your code here...');
+    const [output, setOutput] = useState('');
     const [connectedUsers, setConnectedUsers] = useState([]);
 
     useEffect(() => {
@@ -23,6 +25,9 @@ const EditorPage = () => {
         socket.on('language_update', (newLanguage) => {
             setLanguage(newLanguage);  // Update the language in the editor
         });
+        socket.on('code_update', (newCode) => setCode(newCode));
+
+        socket.on('code_output', (output) => setOutput(output));
 
 
         socket.on('connected_users', (users) => {setConnectedUsers(users);
@@ -35,7 +40,8 @@ const EditorPage = () => {
         return () => {
             
             socket.off('room_joined');
-            
+            socket.off('code_update');
+            socket.off('code_output');
             socket.off('language_update');
             
             socket.off('connected_users');
@@ -52,6 +58,17 @@ const EditorPage = () => {
         // Emit the language change to the server
         socket.emit('language_change', { roomid: roomid, language: newLanguage });
     };
+
+    const handleCodeChange = (newCode) => {
+      setCode(newCode);
+      socket.emit('code_change', { roomid: roomid, code: newCode});
+    };
+
+    const handleRunCode = () => {
+      if (code.trim()) {
+          socket.emit('run_code', { roomid: roomid, language, code });
+      }
+  };
     
 
 
@@ -77,7 +94,9 @@ const EditorPage = () => {
                     <select value={language} onChange={handleLanguageChange} className="w-full py-2 px-3 rounded bg-gray-700">
                         <option value="javascript">JavaScript</option>
                         <option value="python">Python</option>
+                        
                     </select>
+                    <button onClick={handleRunCode} className="mt-4 w-full py-2 px-4 bg-blue-600 rounded">Run Code</button>
                   
                     <InviteFriendButton/>
                 </div>
@@ -85,6 +104,21 @@ const EditorPage = () => {
 
 
             {/* Code editor and output */}
+            <div className="w-3/4 p-4 bg-gray-800 text-white">
+                <MonacoEditor
+                    height="60vh"
+                    language={language}
+                    value={code}
+                    onChange={handleCodeChange}
+                    theme="vs-dark"
+                />
+                <div className="mt-4">
+                    <h3 className="text-lg font-bold pb-1">Output</h3>
+                    <div className="bg-gray-900 h-[27vh] text-white p-4 rounded overflow-y-auto">
+                        {output ? <pre>{output}</pre> : <div>No output yet...</div>}
+                    </div>
+                </div>
+            </div>
             
 
             {/* Chat */}
