@@ -145,6 +145,16 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Handle chat messages
+  socket.on('send_message', ({ roomid, username, message }) => {
+    console.log(`Received message: ${message} from ${username} in room ${roomid}`);
+
+    // Store message in the room's messages array
+    rooms[roomid].messages.push({ username, message });
+    
+    io.to(roomid).emit('receive_message', { username, message });
+  });
+
 
   // Handle user disconnect
   socket.on('disconnect', () => {
