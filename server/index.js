@@ -16,87 +16,74 @@ const io = new Server(server, {
 });
 
 app.use(cors());
-app.use(express.json());
 
-let connectedUsers = {};
+let rooms = {};  // To store room data
 
 io.on('connection', (socket) => {
-    console.log(`User connected: ${socket.id}`);
-
-    socket.on('join_room', ({ username, room }) => {
-        connectedUsers[socket.id] = username;
-        socket.join(room);// User joins the specified room
-        io.to(room).emit('user_connected', { username, users: connectedUsers });
-        console.log(`User ${username} joined room: ${room}`);
-    });
-
-    socket.on('code_change', ({ room, code }) => {
-        socket.broadcast.to(room).emit('code_update', code);
-    });
-
-    socket.on('run_code', ({ room, language, code }) => {
-        // Create a temporary file
-        let filePath, command;
-
-        // Check the selected language and assign appropriate file extension and command
-        if (language === 'javascript') {
-            filePath = path.join(__dirname, 'temp.js');
-            command = `node ${filePath}`;
-        } else if (language === 'python') {
-            filePath = path.join(__dirname, 'temp.py');
-            command = `python ${filePath}`;  // Use python command to execute Python script
-        }
-        // Write the code to the temporary file
-        fs.writeFile(filePath, code, (err) => {
-          
-
-            if (err) {
-                console.error('Error writing file:', err);
-                return;
-            }
-
-            // Execute the temporary file
-            exec(command, (error, stdout, stderr) => {
-                // Delete the temporary file after execution
-                fs.unlink(filePath, (unlinkErr) => {
-                    if (unlinkErr) {
-                        console.error('Error deleting file:', unlinkErr);
-                    }
-                });
-
-                const output = error ? stderr : stdout;
-                io.to(room).emit('code_output', output); // Send output to all users in the room
-
-                if (error) {
-                    console.error(`Execution error: ${error.message}`);
-                    console.error(`stderr: ${stderr}`); // Log stderr for debugging
-                } else {
-                    console.log(`Output: ${stdout}`);
-                }
-            });
-        });
-    });
-
-    
-    
-
-    socket.on('send_message', ({ room, username, message }) => {
-      console.log(`Message received from ${username}: ${message}`);  // Debug message
-      io.to(room).emit('receive_message', { username, message });
-  });
-
-  socket.on('receive_message', ({ username, message }) => {
-    console.log("Message received:", message);  // Debug message
-    setMessages((prevMessages) => [...prevMessages, { username, message }]);
-});
-
+    console.log('A user connected:', socket.id);
   
-    socket.on('disconnect', () => {
-        delete connectedUsers[socket.id];
-        io.emit('user_disconnected', connectedUsers);
+    // Create room
+    socket.on('create_room', ({ roomid, username }) => {
+  
+      if (!username || !roomid) {
+        console.log('Invalid username or roomid');
+        return;
+      }
+  
+      rooms[roomid] = {
+        users: [{ id: socket.id, username }]  
+      };
+      socket.join(roomid);
+  
+      io.to(socket.id).emit('room_created', roomid);
+      
+      console.log(`Room ${roomid} created by ${username}`);
     });
+
+    socket.on('join_room', ({ roomid, username }) => {
+        console.log('Join Room Event:', { roomid, username });
+    
+        if (!roomid || !rooms[roomid]) {
+            io.to(socket.id).emit('room_not_found', 'Room not found');
+            return;
+        }
+    
+        if (!username) {
+            console.log('Invalid username');
+            return;
+        }
+        const userExists = rooms[roomid].users.some(user => user.username === username);
+    
+        // Add user to room's users list
+        if (!userExists) {
+          // Add the user to the room only if they don't already exist
+          rooms[roomid].users.push({ id: socket.id, username });
+        }
+        socket.join(roomid);
+    
+        // Send the current language to the newly joined user
+        io.to(socket.id).emit('language_update', rooms[roomid].language);
+    
+        io.to(socket.id).emit('room_joined', roomid);
+        console.log(`${username} joined room ${roomid}`);
+      });
+
+
+    socket.on('language_change', ({ roomid, language }) => {
+    if (rooms[roomid]) {
+        // Update the room's language
+        rooms[roomid].language = language;
+        console.log(`Language updated to ${language} in room ${roomid}`);
+        
+        // Emit the updated language to all users in the room
+        io.to(roomid).emit('language_update', language);
+    }
+    });
+
 });
 
-server.listen(5000, () => {
-    console.log('Server running on http://localhost:5000');
+const PORT = 5000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
+
